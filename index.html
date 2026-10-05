@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071525">
+<title>KHAN MUSIC</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:#06111f;color:#fff;font-family:Arial,Helvetica,sans-serif}
+body{min-height:100vh;padding-bottom:92px}.wrap{max-width:1100px;margin:auto;padding:16px}
+header{position:sticky;top:0;z-index:20;background:#08182af5;border-bottom:1px solid #214363;backdrop-filter:blur(12px)}
+.nav{max-width:1100px;margin:auto;padding:13px 16px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:23px;font-weight:900}.logo b{color:#27a9ff}
+button{font:inherit;border:0;cursor:pointer;border-radius:10px;padding:11px 14px;font-weight:700}
+.admin{background:#168cff;color:#fff}.secondary{background:#17314c;color:#dff2ff}
+.hero{margin-top:18px;padding:28px 22px;border-radius:22px;background:linear-gradient(135deg,#0a3157,#087fce);box-shadow:0 12px 35px #0005}
+.hero h1{margin:0 0 8px;font-size:34px}.hero p{margin:0;color:#d9efff;line-height:1.5}
+.search{margin:18px 0}.search input,.form input,.form select{width:100%;padding:14px;border-radius:11px;border:1px solid #295274;background:#091b2e;color:#fff;outline:0}
+.search input:focus,.form input:focus,.form select:focus{border-color:#24a7ff}
+.categories{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px}.categories button{white-space:nowrap;background:#102943;color:#c7e5ff}.categories button.active{background:#168cff;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:14px}.card{overflow:hidden;background:#0b2036;border:1px solid #1d405f;border-radius:16px}.cover{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;background:#102b46}.cardbody{padding:13px}.title{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.artist{color:#8eafca;margin:6px 0 12px;font-size:14px}.actions{display:flex;gap:8px}.play{flex:1;background:#168cff;color:#fff}.download{background:#17314c;color:#fff}
+.empty{text-align:center;color:#8ba9c2;padding:42px 12px;line-height:1.6}.error{color:#ff9292}
+.panel{display:none;margin-top:18px;background:#0b2036;border:1px solid #1d405f;border-radius:18px;padding:18px}.panel.show{display:block}.panel h2{margin-top:0}.form{display:grid;gap:12px}.form label{font-size:13px;color:#aac7df}.form label input,.form label select{display:block;margin-top:6px}.check{display:flex!important;gap:8px;align-items:flex-start}.check input{width:auto!important;margin-top:2px}.primary{width:100%;background:#168cff;color:#fff}.msg{min-height:20px;font-size:13px}.ok{color:#4de0a5}.bad{color:#ff8585}
+.modal{display:none;position:fixed;inset:0;background:#000b;z-index:50;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.box{width:100%;max-width:430px;background:#0b2036;border:1px solid #295274;border-radius:18px;padding:20px}.box h2{margin-top:0}.box .form{margin-top:14px}
+footer{text-align:center;color:#6687a4;font-size:12px;padding:28px 12px}
+.player{position:fixed;bottom:0;left:0;right:0;z-index:30;background:#081a2c;border-top:1px solid #244967;padding:9px 12px}.playerin{max-width:1100px;margin:auto;display:flex;gap:12px;align-items:center}.now{min-width:145px;max-width:230px}.now strong,.now small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.now small{color:#8ca9c2;margin-top:3px}.player audio{width:100%}
+@media(max-width:600px){.hero h1{font-size:28px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.playerin{display:block}.now{max-width:100%;margin-bottom:5px}.player audio{height:38px}}
+</style>
+</head>
+<body>
+
+<header><div class="nav"><div class="logo">KHAN <b>MUSIC</b></div><button class="admin" id="adminBtn">Admin</button></div></header>
+
+<main class="wrap">
+<section class="hero"><h1>KHAN MUSIC</h1><p>Listen, discover and download your favourite music.</p></section>
+
+<section class="panel" id="adminPanel">
+<h2>Upload Music</h2>
+<form class="form" id="uploadForm">
+<label>Song title<input id="title" required placeholder="Song title"></label>
+<label>Artist<input id="artist" required placeholder="Artist name"></label>
+<label>Category<select id="category"><option>Bongo Flava</option><option>Afrobeats</option><option>Hip Hop</option><option>Gospel</option><option>Drill</option><option>Other</option></select></label>
+<label>Audio file<input id="audioFile" type="file" accept="audio/*" required></label>
+<label>Cover image<input id="coverFile" type="file" accept="image/*"></label>
+<label class="check"><input id="rights" type="checkbox" required><span>I confirm that I have the right or permission to upload this music.</span></label>
+<button class="primary" id="uploadBtn">Upload Music</button>
+<div class="msg" id="uploadMsg"></div>
+<button type="button" class="secondary" id="logoutBtn">Logout</button>
+</form>
+</section>
+
+<div class="search"><input id="search" type="search" placeholder="Search music or artist..."></div>
+<div class="categories" id="categories"></div>
+<section class="grid" id="songs"><div class="empty">Loading music...</div></section>
+<footer>THIS WEBSITE CREATED BY VICTOR TARIMO (KHAN__VEE)</footer>
+</main>
+
+<div class="modal" id="loginModal"><div class="box">
+<h2>Admin Login</h2>
+<form class="form" id="loginForm">
+<label>Email<input id="email" type="email" autocomplete="username" required></label>
+<label>Password<input id="password" type="password" autocomplete="current-password" required></label>
+<button class="primary" id="loginBtn">Login</button>
+<div class="msg" id="loginMsg"></div>
+<button type="button" class="secondary" id="closeLogin">Cancel</button>
+</form></div></div>
+
+<div class="player"><div class="playerin">
+<div class="now"><strong id="nowTitle">No song selected</strong><small id="nowArtist">KHAN MUSIC</small></div>
+<audio id="audio" controls preload="none"></audio>
+</div></div>
+
+<script>
+"use strict";
+
+const SUPABASE_URL="https://eqbswcopodcxmwncrtqj.supabase.co";
+const SUPABASE_KEY="sb_publishable_iXUq-FU6G4hdcOBkW7GHpQ_3OPjPIGD";
+const MUSIC_BUCKET="music";
+const COVER_BUCKET="covers";
+
+let client=null;
+let songs=[];
+let activeCategory="All";
+
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+
+function msg(id,text,ok=false){$(id).textContent=text;$(id).className="msg "+(ok?"ok":"bad");}
+function publicUrl(bucket,path){return path&&client?client.storage.from(bucket).getPublicUrl(path).data.publicUrl:"";}
+
+async function start(){
+  if(!window.supabase){$("songs").innerHTML='<div class="empty error">Supabase library could not load. Check your internet connection.</div>';return;}
+  try{
+    client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    client.auth.onAuthStateChange((_e,s)=>setAdmin(s));
+    const {data:{session}}=await client.auth.getSession();
+    setAdmin(session);
+    drawCategories();
+    await loadSongs();
+  }catch(e){
+    console.error(e);
+    $("songs").innerHTML='<div class="empty error">Supabase connection failed.<br>'+esc(e.message)+'</div>';
+  }
+}
+
+function setAdmin(session){
+  $("adminBtn").textContent=session?"Admin ✓":"Admin";
+  $("adminPanel").classList.toggle("show",!!session);
+}
+
+async function loadSongs(){
+  $("songs").innerHTML='<div class="empty">Loading music...</div>';
+  const {data,error}=await client.from("songs").select("*").eq("published",true).order("created_at",{ascending:false});
+  if(error){
+    console.error(error);
+    $("songs").innerHTML='<div class="empty error"><b>Could not load music.</b><br>'+esc(error.message)+'</div>';
+    return;
+  }
+  songs=(data||[]).map(s=>({
+    ...s,
+    category:s.category||"Other",
+    title:s.title||s.name||"Untitled",
+    artist:s.artist||s.author||"Unknown artist"
+  }));
+  drawCategories();
+  render();
+}
+
+function drawCategories(){
+  const cats=["All","Bongo Flava","Afrobeats","Hip Hop","Gospel","Drill","Other"];
+  $("categories").innerHTML=cats.map(c=>'<button class="'+(c===activeCategory?"active":"")+'" onclick="setCategory('+JSON.stringify(c)+')">'+esc(c)+'</button>').join("");
+}
+window.setCategory=c=>{activeCategory=c;drawCategories();render();};
+
+function render(){
+  const q=$("search").value.trim().toLowerCase();
+  const list=songs.filter(s=>{
+    const text=(s.title+" "+s.artist+" "+(s.category||"Other")).toLowerCase();
+    return (activeCategory==="All"||s.category===activeCategory)&&text.includes(q);
+  });
+  if(!list.length){$("songs").innerHTML='<div class="empty">No music found yet.</div>';return;}
+  $("songs").innerHTML=list.map(s=>{
+    const cover=publicUrl(COVER_BUCKET,s.cover_path)||"data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500"><rect width="100%" height="100%" fill="#12314d"/><text x="50%" y="52%" text-anchor="middle" fill="white" font-size="42">KHAN MUSIC</text></svg>');
+    return '<article class="card"><img class="cover" src="'+esc(cover)+'" alt=""><div class="cardbody"><div class="title">'+esc(s.title)+'</div><div class="artist">'+esc(s.artist)+'</div><div class="actions"><button class="play" onclick="playSong('+Number(s.id)+')">Play</button><button class="download" onclick="downloadSong('+Number(s.id)+')">Download</button></div></div></article>';
+  }).join("");
+}
+
+window.playSong=id=>{
+  const s=songs.find(x=>Number(x.id)===Number(id));
+  if(!s)return;
+  const url=publicUrl(MUSIC_BUCKET,s.audio_path);
+  if(!url){alert("Audio file is missing.");return;}
+  $("nowTitle").textContent=s.title;$("nowArtist").textContent=s.artist;$("audio").src=url;
+  $("audio").play().catch(()=>{});
+};
+
+window.downloadSong=id=>{
+  const s=songs.find(x=>Number(x.id)===Number(id));
+  if(!s)return;
+  const url=publicUrl(MUSIC_BUCKET,s.audio_path);
+  if(!url){alert("Audio file is missing.");return;}
+  const a=document.createElement("a");a.href=url;a.target="_blank";a.download=(s.title||"music")+".mp3";document.body.appendChild(a);a.click();a.remove();
+};
+
+$("search").addEventListener("input",render);
+
+$("adminBtn").addEventListener("click",async()=>{
+  const {data:{session}}=await client.auth.getSession();
+  if(session)$("adminPanel").classList.toggle("show");
+  else $("loginModal").classList.add("show");
+});
+$("closeLogin").onclick=()=>{$("loginModal").classList.remove("show");};
+$("loginForm").onsubmit=async e=>{
+  e.preventDefault();
+  $("loginBtn").disabled=true;msg("loginMsg","Signing in...",true);
+  const {error}=await client.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+  $("loginBtn").disabled=false;
+  if(error)msg("loginMsg",error.message);else{$("loginModal").classList.remove("show");msg("loginMsg","",true);}
+};
+$("logoutBtn").onclick=async()=>{const {error}=await client.auth.signOut();if(error)msg("uploadMsg",error.message);};
+
+$("uploadForm").onsubmit=async e=>{
+  e.preventDefault();
+  const {data:{session}}=await client.auth.getSession();
+  if(!session){msg("uploadMsg","Please login first.");return;}
+
+  const title=$("title").value.trim(),artist=$("artist").value.trim();
+  const category=$("category").value,audioFile=$("audioFile").files[0],coverFile=$("coverFile").files[0];
+  if(!title||!artist||!audioFile||!$("rights").checked){msg("uploadMsg","Fill the required fields and confirm permission.");return;}
+
+  const btn=$("uploadBtn");btn.disabled=true;btn.textContent="Uploading...";
+  const folder=crypto.randomUUID(),audioName=audioFile.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+  const audioPath=folder+"/"+audioName;let coverPath=null;
+
+  try{
+    msg("uploadMsg","Uploading audio...",true);
+    let r=await client.storage.from(MUSIC_BUCKET).upload(audioPath,audioFile,{contentType:audioFile.type||"audio/mpeg",upsert:false});
+    if(r.error)throw new Error("Audio upload: "+r.error.message);
+
+    if(coverFile){
+      msg("uploadMsg","Uploading cover...",true);
+      const coverName=coverFile.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+      coverPath=folder+"/"+coverName;
+      r=await client.storage.from(COVER_BUCKET).upload(coverPath,coverFile,{contentType:coverFile.type||"image/jpeg",upsert:false});
+      if(r.error)throw new Error("Cover upload: "+r.error.message);
+    }
+
+    msg("uploadMsg","Saving song...",true);
+
+    // Intentionally uses only columns required by the existing KHAN MUSIC schema.
+    // Category stays a website-side value so an old songs table without category will work.
+    const row={title:title,artist:artist,audio_path:audioPath,cover_path:coverPath,published:true};
+    r=await client.from("songs").insert(row);
+    if(r.error)throw new Error("Database: "+r.error.message);
+
+    msg("uploadMsg","Music uploaded successfully.",true);
+    $("uploadForm").reset();
+    await loadSongs();
+  }catch(err){
+    console.error(err);
+    msg("uploadMsg",err.message||"Upload failed.");
+  }finally{btn.disabled=false;btn.textContent="Upload Music";}
+};
+
+start();
+</script>
+</body>
+  </html>
+  
